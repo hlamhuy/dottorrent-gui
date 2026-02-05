@@ -18,7 +18,7 @@ setup(
     install_requires=['dottorrent>=1.9.2', 'humanfriendly', 'PyQt5>=5.7'],
 
     # metadata for upload to PyPI
-    author="Kevin Zhang",
+    author="Kevin Zhang, customized by Huy Hoang",
     author_email="kevin@kevinzhang.me",
     description="An advanced GUI torrent file creator with batch functionality, powered by PyQt and dottorrent",
     long_description=open('README.rst').read(),
