@@ -1,5 +1,10 @@
 Changelog
 =========
+1.4.1-alpha
+------
+* [FIX] Crash when validating manually entered paths with invalid characters
+* [NEW] Add profile settings
+
 1.4.0-alpha
 ------
 * [NEW] Add output directory field for pre-selecting default save location

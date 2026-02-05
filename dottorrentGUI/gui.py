@@ -114,11 +114,17 @@ class DottorrentGUI(Ui_MainWindow):
 
         self.torrent = None
         self.MainWindow = MainWindow
+        self.current_profile = None
 
         self.actionImportProfile.triggered.connect(self.import_profile)
         self.actionExportProfile.triggered.connect(self.export_profile)
         self.actionAbout.triggered.connect(self.showAboutDialog)
         self.actionQuit.triggered.connect(self.MainWindow.close)
+
+        # Profile management
+        self.saveProfileButton.clicked.connect(self.save_profile)
+        self.deleteProfileButton.clicked.connect(self.delete_profile)
+        self.profileComboBox.currentIndexChanged.connect(self.profile_changed)
 
         self.fileRadioButton.toggled.connect(self.inputModeToggle)
         self.fileRadioButton.setChecked(True)
@@ -162,6 +168,7 @@ class DottorrentGUI(Ui_MainWindow):
         self.cancelButton.clicked.connect(self.cancel_creation)
         self.resetButton.clicked.connect(self.reset)
 
+        self.load_available_profiles()
         self._statusBarMsg('Ready')
 
     def getSettings(self):
@@ -217,6 +224,14 @@ class DottorrentGUI(Ui_MainWindow):
         output_path = settings.value('output/path')
         if output_path:
             self.outputEdit.setText(output_path)
+        
+        # Load last used profile
+        last_profile = settings.value('profile/last_profile')
+        if last_profile:
+            index = self.profileComboBox.findText(last_profile)
+            if index >= 0:
+                self.profileComboBox.setCurrentIndex(index)
+                self.load_profile_data(last_profile)
 
     def saveSettings(self):
         settings = self.getSettings()
@@ -236,6 +251,10 @@ class DottorrentGUI(Ui_MainWindow):
             settings.setValue('history/last_input_dir', self.last_input_dir)
         if self.last_output_dir:
             settings.setValue('history/last_output_dir', self.last_output_dir)
+        
+        # Save last used profile
+        if self.current_profile:
+            settings.setValue('profile/last_profile', self.current_profile)
 
     def _statusBarMsg(self, msg):
         self.MainWindow.statusBar().showMessage(msg)
@@ -587,6 +606,160 @@ class DottorrentGUI(Ui_MainWindow):
         self.sourceEdit.setText(None)
         self.torrent = None
         self._statusBarMsg('Ready')
+
+    def load_available_profiles(self):
+        """Load list of saved profiles into the combo box"""
+        settings = self.getSettings()
+        settings.beginGroup('profiles')
+        profile_names = settings.childGroups()
+        settings.endGroup()
+        
+        self.profileComboBox.clear()
+        self.profileComboBox.addItem('')  # Empty profile option
+        self.profileComboBox.addItems(sorted(profile_names))
+
+    def get_current_profile_data(self):
+        """Get current settings as profile data"""
+        return {
+            'exclude': self.excludeEdit.toPlainText().strip(),
+            'trackers': self.trackerEdit.toPlainText().strip(),
+            'web_seeds': self.webSeedEdit.toPlainText().strip(),
+            'private': self.privateTorrentCheckBox.isChecked(),
+            'compute_md5': self.md5CheckBox.isChecked(),
+            'source': self.sourceEdit.text(),
+            'output_path': self.outputEdit.text(),
+            'piece_size': self.pieceSizeComboBox.currentIndex(),
+            'comment': self.commentEdit.text()
+        }
+
+    def save_profile(self):
+        """Save current settings to a profile"""
+        profile_name = self.profileComboBox.currentText().strip()
+        
+        # If no profile is selected (empty), show dialog to enter name
+        if not profile_name:
+            profile_name, ok = QtWidgets.QInputDialog.getText(
+                self.MainWindow,
+                'New Profile',
+                'Enter profile name:'
+            )
+            profile_name = profile_name.strip()
+            
+            if not ok or not profile_name:
+                return
+        
+        # Ask for confirmation if profile already exists
+        settings = self.getSettings()
+        settings.beginGroup('profiles')
+        profile_exists = profile_name in settings.childGroups()
+        settings.endGroup()
+        
+        if profile_exists:
+            reply = QtWidgets.QMessageBox.question(
+                self.MainWindow,
+                'Overwrite Profile',
+                f'Profile "{profile_name}" already exists. Overwrite?',
+                QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+            )
+            if reply == QtWidgets.QMessageBox.No:
+                return
+        
+        # Save profile data
+        profile_data = self.get_current_profile_data()
+        settings.beginGroup(f'profiles/{profile_name}')
+        for key, value in profile_data.items():
+            settings.setValue(key, value)
+        settings.endGroup()
+        
+        self.current_profile = profile_name
+        self.load_available_profiles()
+        
+        # Set the combo box to the saved profile
+        index = self.profileComboBox.findText(profile_name)
+        if index >= 0:
+            self.profileComboBox.setCurrentIndex(index)
+        
+        self._statusBarMsg(f'Profile "{profile_name}" saved')
+
+    def load_profile_data(self, profile_name):
+        """Load profile data by name"""
+        settings = self.getSettings()
+        settings.beginGroup(f'profiles/{profile_name}')
+        
+        exclude = settings.value('exclude', '')
+        trackers = settings.value('trackers', '')
+        web_seeds = settings.value('web_seeds', '')
+        
+        # Handle both boolean string values and integer values
+        private_val = settings.value('private', 0)
+        if isinstance(private_val, str):
+            private = private_val.lower() == 'true'
+        else:
+            private = bool(int(private_val or 0))
+        
+        compute_md5_val = settings.value('compute_md5', 0)
+        if isinstance(compute_md5_val, str):
+            compute_md5 = compute_md5_val.lower() == 'true'
+        else:
+            compute_md5 = bool(int(compute_md5_val or 0))
+        
+        source = settings.value('source', '')
+        output_path = settings.value('output_path', '')
+        piece_size = int(settings.value('piece_size', 0) or 0)
+        comment = settings.value('comment', '')
+        
+        settings.endGroup()
+        
+        # Apply settings
+        self.excludeEdit.setPlainText(exclude)
+        self.trackerEdit.setPlainText(trackers)
+        self.webSeedEdit.setPlainText(web_seeds)
+        self.privateTorrentCheckBox.setChecked(private)
+        self.md5CheckBox.setChecked(compute_md5)
+        self.sourceEdit.setText(source)
+        self.outputEdit.setText(output_path)
+        self.pieceSizeComboBox.setCurrentIndex(piece_size)
+        self.commentEdit.setText(comment)
+        
+        self.current_profile = profile_name
+
+    def delete_profile(self):
+        """Delete the selected profile"""
+        profile_name = self.profileComboBox.currentText().strip()
+        
+        if not profile_name:
+            QtWidgets.QMessageBox.warning(
+                self.MainWindow,
+                'No Profile Selected',
+                'Please select a profile to delete.'
+            )
+            return
+        
+        reply = QtWidgets.QMessageBox.question(
+            self.MainWindow,
+            'Delete Profile',
+            f'Are you sure you want to delete profile "{profile_name}"?',
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
+        )
+        
+        if reply == QtWidgets.QMessageBox.Yes:
+            settings = self.getSettings()
+            settings.beginGroup('profiles')
+            settings.remove(profile_name)
+            settings.endGroup()
+            
+            self.current_profile = None
+            self.load_available_profiles()
+            self.profileComboBox.setCurrentIndex(0)  # Set to empty
+            self._statusBarMsg(f'Profile "{profile_name}" deleted')
+
+    def profile_changed(self, index):
+        """Handle profile selection change"""
+        # Only auto-load if not the empty option
+        if index > 0:
+            profile_name = self.profileComboBox.currentText().strip()
+            if profile_name:
+                self.load_profile_data(profile_name)
 
 
 def main():
