@@ -1,5 +1,13 @@
 Changelog
 =========
+1.4.0-alpha
+------
+* [NEW] Add output directory field for pre-selecting default save location
+* [NEW] Input path field is now editable - manual text entry supported
+* [NEW] Add validate button next to input path field to validate manually entered paths
+* [CHANGE] Skip file save dialog when output directory is pre-selected, save directly with default filename
+* [ENHANCEMENT] Output directory field is disabled during torrent creation like other fields
+
 
 1.3.11
 ------

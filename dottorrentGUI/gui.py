@@ -13,10 +13,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from dottorrentGUI import Ui_AboutDialog, Ui_MainWindow, __version__
 
 
-PROGRAM_NAME = "dottorrent-gui"
+PROGRAM_NAME = "dottorrent-gui-dev"
 PROGRAM_NAME_VERSION = "{} {}".format(PROGRAM_NAME, __version__)
-CREATOR = "dottorrent-gui/{} (https://github.com/kz26/dottorrent-gui)".format(
-    __version__)
+CREATOR = ""
 
 PIECE_SIZES = [None] + [2 ** i for i in range(14, 27)]
 
@@ -42,7 +41,6 @@ class CreateTorrentQThread(QtCore.QThread):
             return self.isInterruptionRequested()
 
         self.torrent.creation_date = datetime.now()
-        self.torrent.created_by = CREATOR
         try:
             self.success = self.torrent.generate(callback=progress_callback)
         except Exception as exc:
@@ -92,8 +90,7 @@ class CreateTorrentBatchQThread(QtCore.QThread):
                     source=self.source,
                     comment=self.comment,
                     include_md5=self.include_md5,
-                    creation_date=datetime.now(),
-                    created_by=CREATOR
+                    creation_date=datetime.now()
                 )
                 try:
                     self.success = t.generate(callback=callback)
@@ -133,6 +130,9 @@ class DottorrentGUI(Ui_MainWindow):
         self.inputEdit.dragEnterEvent = self.inputDragEnterEvent
         self.inputEdit.dropEvent = self.inputDropEvent
         self.pasteButton.clicked.connect(self.pasteInput)
+        self.validateButton.clicked.connect(self.validateInput)
+
+        self.outputBrowseButton.clicked.connect(self.browseOutput)
 
         self.pieceCountLabel.hide()
         self.pieceSizeComboBox.addItem('Auto')
@@ -211,6 +211,12 @@ class DottorrentGUI(Ui_MainWindow):
         self.last_input_dir = settings.value('history/last_input_dir') or None
         self.last_output_dir = settings.value(
             'history/last_output_dir') or None
+        output_path = settings.value('output/path')
+        if output_path:
+            self.outputEdit.setText(output_path)
+        output_path = settings.value('output/path')
+        if output_path:
+            self.outputEdit.setText(output_path)
 
     def saveSettings(self):
         settings = self.getSettings()
@@ -223,6 +229,7 @@ class DottorrentGUI(Ui_MainWindow):
                           int(self.privateTorrentCheckBox.isChecked()))
         settings.setValue('options/source', self.sourceEdit.text())
         settings.setValue('options/compute_md5', int(self.md5CheckBox.isChecked()))
+        settings.setValue('output/path', self.outputEdit.text())
         settings.setValue('geometry/size', self.MainWindow.size())
         settings.setValue('geometry/position', self.MainWindow.pos())
         if self.last_input_dir:
@@ -275,6 +282,14 @@ class DottorrentGUI(Ui_MainWindow):
             self.last_input_dir = os.path.split(fn)[0]
             self.initializeTorrent()
 
+    def browseOutput(self):
+        initial_dir = self.outputEdit.text() or self.last_output_dir or ''
+        output_dir = QtWidgets.QFileDialog.getExistingDirectory(
+            self.MainWindow, 'Select output directory', initial_dir)
+        if output_dir:
+            self.outputEdit.setText(output_dir)
+            self.last_output_dir = output_dir
+
     def injectInputPath(self, path):
         if os.path.exists(path):
             if os.path.isfile(path):
@@ -291,6 +306,11 @@ class DottorrentGUI(Ui_MainWindow):
             self.inputEdit.setText(path)
             self.last_input_dir = os.path.split(path)[0]
             self.initializeTorrent()
+
+    def validateInput(self):
+        path = self.inputEdit.text().strip()
+        if path:
+            self.injectInputPath(path)
 
     def inputDragEnterEvent(self, event):
         if event.mimeData().hasUrls():
@@ -395,11 +415,20 @@ class DottorrentGUI(Ui_MainWindow):
                 os.path.split(self.inputEdit.text())[1])[0] + '.torrent'
         else:
             save_fn = self.inputEdit.text().split(os.sep)[-1] + '.torrent'
-        if self.last_output_dir and os.path.exists(self.last_output_dir):
-            save_fn = os.path.join(self.last_output_dir, save_fn)
-        fn = QtWidgets.QFileDialog.getSaveFileName(
-            self.MainWindow, 'Save torrent', save_fn,
-            filter=('Torrent file (*.torrent)'))[0]
+        
+        # Use output path if set and skip dialog
+        output_dir = self.outputEdit.text()
+        if output_dir and os.path.exists(output_dir):
+            fn = os.path.join(output_dir, save_fn)
+        else:
+            # Show dialog if no output path is set
+            default_dir = self.last_output_dir
+            if default_dir and os.path.exists(default_dir):
+                save_fn = os.path.join(default_dir, save_fn)
+            fn = QtWidgets.QFileDialog.getSaveFileName(
+                self.MainWindow, 'Save torrent', save_fn,
+                filter=('Torrent file (*.torrent)'))[0]
+        
         if fn:
             self.last_output_dir = os.path.split(fn)[0]
             self.creation_thread = CreateTorrentQThread(
@@ -416,8 +445,14 @@ class DottorrentGUI(Ui_MainWindow):
             self.creation_thread.start()
 
     def createTorrentBatch(self):
-        save_dir = QtWidgets.QFileDialog.getExistingDirectory(
-            self.MainWindow, 'Select output directory', self.last_output_dir)
+        # Use output path if set, otherwise prompt for directory
+        output_dir = self.outputEdit.text()
+        if not output_dir or not os.path.exists(output_dir):
+            save_dir = QtWidgets.QFileDialog.getExistingDirectory(
+                self.MainWindow, 'Select output directory', self.last_output_dir)
+        else:
+            save_dir = output_dir
+        
         if save_dir:
             self.last_output_dir = save_dir
             trackers = self.trackerEdit.toPlainText().strip().split()
@@ -461,6 +496,7 @@ class DottorrentGUI(Ui_MainWindow):
 
     def creation_started(self):
         self.inputGroupBox.setEnabled(False)
+        self.outputGroupBox.setEnabled(False)
         self.seedingGroupBox.setEnabled(False)
         self.optionGroupBox.setEnabled(False)
         self.progressBar.show()
@@ -470,6 +506,7 @@ class DottorrentGUI(Ui_MainWindow):
 
     def creation_finished(self):
         self.inputGroupBox.setEnabled(True)
+        self.outputGroupBox.setEnabled(True)
         self.seedingGroupBox.setEnabled(True)
         self.optionGroupBox.setEnabled(True)
         self.progressBar.hide()
@@ -538,6 +575,7 @@ class DottorrentGUI(Ui_MainWindow):
         self.fileRadioButton.setChecked(True)
         self.batchModeCheckBox.setChecked(False)
         self.inputEdit.setText(None)
+        self.outputEdit.setText(None)
         self.excludeEdit.setPlainText(None)
         self.trackerEdit.setPlainText(None)
         self.webSeedEdit.setPlainText(None)

@@ -146,17 +146,43 @@
             </widget>
            </item>
            <item row="1" column="0" colspan="4">
-            <widget class="QLineEdit" name="inputEdit">
-             <property name="text">
-              <string/>
-             </property>
-             <property name="dragEnabled">
-              <bool>true</bool>
-             </property>
-             <property name="readOnly">
-              <bool>true</bool>
-             </property>
-            </widget>
+            <layout class="QHBoxLayout" name="horizontalLayout_inputPath">
+             <item>
+              <widget class="QLineEdit" name="inputEdit">
+               <property name="text">
+                <string/>
+               </property>
+               <property name="dragEnabled">
+                <bool>true</bool>
+               </property>
+               <property name="readOnly">
+                <bool>false</bool>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QPushButton" name="validateButton">
+               <property name="sizePolicy">
+                <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                 <horstretch>0</horstretch>
+                 <verstretch>0</verstretch>
+                </sizepolicy>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>30</width>
+                 <height>16777215</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>OK</string>
+               </property>
+               <property name="toolTip">
+                <string>Validate input path</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </item>
            <item row="2" column="0" colspan="4">
             <layout class="QHBoxLayout" name="horizontalLayout_inputButtons">
@@ -201,6 +227,45 @@
              </property>
              <property name="text">
               <string>Directory</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="outputGroupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="title">
+           <string>Output</string>
+          </property>
+          <layout class="QGridLayout" name="gridLayout_3">
+           <item row="0" column="0">
+            <widget class="QLabel" name="outputLabel">
+             <property name="text">
+              <string>Output directory</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLineEdit" name="outputEdit">
+             <property name="text">
+              <string/>
+             </property>
+             <property name="readOnly">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QPushButton" name="outputBrowseButton">
+             <property name="text">
+              <string>Browse...</string>
              </property>
             </widget>
            </item>
