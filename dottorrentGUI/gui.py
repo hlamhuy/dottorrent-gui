@@ -762,8 +762,115 @@ class DottorrentGUI(Ui_MainWindow):
                 self.load_profile_data(profile_name)
 
 
+def apply_dark_theme(app):
+    """Apply dark theme to the application"""
+    # Set dark palette
+    dark_palette = QtGui.QPalette()
+    dark_palette.setColor(QtGui.QPalette.Window, QtGui.QColor(53, 53, 53))
+    dark_palette.setColor(QtGui.QPalette.WindowText, QtCore.Qt.white)
+    dark_palette.setColor(QtGui.QPalette.Base, QtGui.QColor(35, 35, 35))
+    dark_palette.setColor(QtGui.QPalette.AlternateBase, QtGui.QColor(53, 53, 53))
+    dark_palette.setColor(QtGui.QPalette.ToolTipBase, QtGui.QColor(25, 25, 25))
+    dark_palette.setColor(QtGui.QPalette.ToolTipText, QtCore.Qt.white)
+    dark_palette.setColor(QtGui.QPalette.Text, QtCore.Qt.white)
+    dark_palette.setColor(QtGui.QPalette.Button, QtGui.QColor(25, 25, 25))
+    dark_palette.setColor(QtGui.QPalette.ButtonText, QtCore.Qt.black)
+    dark_palette.setColor(QtGui.QPalette.BrightText, QtCore.Qt.red)
+    dark_palette.setColor(QtGui.QPalette.Link, QtGui.QColor(42, 130, 218))
+    dark_palette.setColor(QtGui.QPalette.Highlight, QtGui.QColor(42, 130, 218))
+    dark_palette.setColor(QtGui.QPalette.HighlightedText, QtCore.Qt.black)
+    
+    # Disabled colors
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.WindowText, QtGui.QColor(127, 127, 127))
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Text, QtGui.QColor(127, 127, 127))
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.ButtonText, QtGui.QColor(127, 127, 127))
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.Highlight, QtGui.QColor(80, 80, 80))
+    dark_palette.setColor(QtGui.QPalette.Disabled, QtGui.QPalette.HighlightedText, QtCore.Qt.darkGray)
+    
+    app.setPalette(dark_palette)
+    
+    # Additional stylesheet for better dark theme support
+    app.setStyleSheet("""
+        QToolTip {
+            color: #ffffff;
+            background-color: #2a2a2a;
+            border: 1px solid #767676;
+        }
+        QLineEdit, QTextEdit, QPlainTextEdit {
+            background-color: #232323;
+            color: #ffffff;
+            border: 1px solid #767676;
+            padding: 2px;
+        }
+        QLineEdit:disabled, QTextEdit:disabled, QPlainTextEdit:disabled {
+            background-color: #505050;
+            color: #7f7f7f;
+        }
+        QComboBox {
+            background-color: #232323;
+            color: #ffffff;
+            border: 1px solid #767676;
+            padding: 3px;
+        }
+        QComboBox:disabled {
+            background-color: #505050;
+            color: #7f7f7f;
+        }
+        QComboBox::drop-down {
+            border: none;
+        }
+        QComboBox QAbstractItemView {
+            background-color: #353535;
+            color: #ffffff;
+            selection-background-color: #767676;
+        }
+        QProgressBar {
+            border: 1px solid #767676;
+            background-color: #232323;
+            text-align: center;
+            color: #ffffff;
+        }
+        QProgressBar::chunk {
+            background-color: #19a819;
+        }
+        QGroupBox {
+            border: 1px solid #767676;
+            margin-top: 8px;
+            padding-top: 4px;
+        }
+        QGroupBox::title {
+            subcontrol-origin: margin;
+            left: 10px;
+            padding: 0 3px 0 3px;
+            color: #ffffff;
+        }
+        QScrollArea {
+            border: none;
+        }
+        QMenuBar {
+            background-color: #353535;
+            color: #ffffff;
+        }
+        QMenuBar::item:selected {
+            background-color: #767676;
+        }
+        QMenu {
+            background-color: #353535;
+            color: #ffffff;
+            border: 1px solid #767676;
+        }
+        QMenu::item:selected {
+            background-color: #767676;
+        }
+    """)
+
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
+    
+    # Apply dark theme
+    apply_dark_theme(app)
+    
     MainWindow = QtWidgets.QMainWindow()
     ui = DottorrentGUI()
     ui.setupUi(MainWindow)

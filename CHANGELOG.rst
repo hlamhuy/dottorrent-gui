@@ -1,5 +1,9 @@
 Changelog
 =========
+1.4.2-alpha
+------
+* [CHANGE] Change to dark theme
+
 1.4.1-alpha
 ------
 * [FIX] Crash when validating manually entered paths with invalid characters

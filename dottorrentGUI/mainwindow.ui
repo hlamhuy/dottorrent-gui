@@ -278,15 +278,8 @@
           <property name="title">
            <string>Output</string>
           </property>
-          <layout class="QGridLayout" name="gridLayout_3">
+          <layout class="QGridLayout" name="gridLayout_3">           
            <item row="0" column="0">
-            <widget class="QLabel" name="outputLabel">
-             <property name="text">
-              <string>Output directory</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="0">
             <widget class="QLineEdit" name="outputEdit">
              <property name="text">
               <string/>
